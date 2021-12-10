@@ -16,8 +16,6 @@ function M.start()
     local response = curl.get("https://random-word-api.herokuapp.com/word?number=10")
     local body = response.body
 
-    local lines = {}
-
     local delimiter = ","
     for match in (body..delimiter):gmatch("(.-)"..delimiter) do
         match = string.gsub(match, '%W', '')
