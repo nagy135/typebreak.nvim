@@ -9,10 +9,6 @@ function M.start()
     local ui = api.nvim_list_uis()[1]
 
     local response = curl.get("https://random-word-api.herokuapp.com/word?number=10")
-    -- if response.status ~= 200 then
-    --     print('non-200 response from api')
-    --     return
-    -- end
     local body = response.body
 
     local lines = {}
@@ -25,7 +21,10 @@ function M.start()
     end
 
     for k, word in pairs(words) do
-        print(string.len(word))
+        local length = string.len(word)
+        local before = math.random(0, width-length)
+        local after = width - length - before
+        table.insert(lines, string.rep(' ', before) .. word .. string.rep(' ', after))
     end
 
     local buf = api.nvim_create_buf(false, 0)
