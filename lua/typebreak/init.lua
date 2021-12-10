@@ -3,6 +3,8 @@ local M = {}
 local api = vim.api
 local curl = require("plenary.curl")
 
+M.buf = nil
+
 function M.start()
     local width = 50
     local height = 11
@@ -20,7 +22,7 @@ function M.start()
         table.insert(words, match)
     end
 
-    for k, word in pairs(words) do
+    for _, word in pairs(words) do
         local length = string.len(word)
         local before = math.random(0, width-length)
         local after = width - length - before
@@ -28,6 +30,8 @@ function M.start()
     end
 
     local buf = api.nvim_create_buf(false, 0)
+
+    M.buf = buf
 
     local opts = {
         relative = "editor",
@@ -43,10 +47,18 @@ function M.start()
 
     local win = api.nvim_open_win(buf, 1, opts)
 
-    api.nvim_buf_set_keymap(buf, 'n', 's', '<cmd>lua print("pressed s")<CR>', {noremap = true, silent = true})
+    M.set_mapping()
 end
 
+function M.key_pressed(key)
+    print('PRESSED KEY' .. key)
+end
 
-M.start()
+function M.set_mapping()
+    local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u", "v", "w", "x", "y", "z" }
+    for _,letter in pairs(keys) do
+        vim.api.nvim_buf_set_keymap(M.buf, 'n', letter, '<cmd>lua require("typebreak").key_pressed("' .. letter .. '")<CR>', {noremap = true, silent = true})
+    end
+end
 
 return M
