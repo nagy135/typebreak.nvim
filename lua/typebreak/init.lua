@@ -63,12 +63,10 @@ end
 function M.key_pressed(key)
     if key == "BS" then
         M.memory = string.sub(M.memory, 0, -2)
-        print("memory",vim.inspect(M.memory))
         M.draw()
         return
     end
     M.memory = M.memory .. key
-    print("memory",vim.inspect(M.memory))
     local match = false
     for k, word in pairs(M.words) do
         if string.sub(M.memory, -string.len(word)) == word then
