@@ -61,7 +61,14 @@ function M.draw()
 end
 
 function M.key_pressed(key)
+    if key == "BS" then
+        M.memory = string.sub(M.memory, 0, -2)
+        print("memory",vim.inspect(M.memory))
+        M.draw()
+        return
+    end
     M.memory = M.memory .. key
+    print("memory",vim.inspect(M.memory))
     local match = false
     for k, word in pairs(M.words) do
         if string.sub(M.memory, -string.len(word)) == word then
@@ -80,6 +87,7 @@ function M.set_mapping()
     for _,letter in pairs(keys) do
         vim.api.nvim_buf_set_keymap(M.buf, 'i', letter, '<cmd>lua require("typebreak").key_pressed("' .. letter .. '")<CR>', {noremap = true, silent = true})
     end
+    vim.api.nvim_buf_set_keymap(M.buf, 'i', '<BS>', '<CMD>lua require("typebreak").key_pressed("BS")<CR>', {noremap = true, silent = true})
 end
 
 return M
