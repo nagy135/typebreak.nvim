@@ -92,7 +92,7 @@ function M.key_pressed(key)
 end
 
 function M.set_mapping()
-    local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u", "v", "w", "x", "y", "z" }
+    local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z" }
     for _,letter in pairs(keys) do
         vim.api.nvim_buf_set_keymap(M.buf, 'i', letter, '<cmd>lua require("typebreak").key_pressed("' .. letter .. '")<CR>', {noremap = true, silent = true})
     end
