@@ -2,6 +2,8 @@
 
 ![](https://tokei.rs/b1/github/nagy135/typebreak.nvim?category=code)
 
+![screen](screen.png)
+
 Take a brief break from current work and use it to speed up your typing speed.
 
 # Install
