@@ -6,6 +6,7 @@ local curl = require("plenary.curl")
 M.buf = nil
 M.memory = ""
 M.words = {}
+M.found = 0
 M.lines = {}
 M.width = 50
 M.height = 10
@@ -13,6 +14,29 @@ M.height = 10
 function M.start()
     local ui = api.nvim_list_uis()[1]
 
+    M.fetch_new_lines()
+
+    M.buf = api.nvim_create_buf(false, true)
+
+    M.draw()
+
+    local opts = {
+        relative = "editor",
+        width = M.width,
+        height = M.height,
+        col = (ui.width/2) - (M.width/2),
+        row = (ui.height/2) - (M.height/2),
+        border = "shadow",
+        anchor = 'NW',
+        style = 'minimal',
+    }
+
+    api.nvim_open_win(M.buf, 1, opts)
+
+    M.set_mapping()
+end
+
+function M.fetch_new_lines()
     -- reset
     M.lines = {}
     M.words = {}
@@ -34,26 +58,6 @@ function M.start()
         table.insert(M.lines, string.rep(' ', before) .. word .. string.rep(' ', after))
     end
 
-    local buf = api.nvim_create_buf(false, true)
-    print("buf",vim.inspect(buf))
-
-    M.buf = buf
-
-    local opts = {
-        relative = "editor",
-        width = M.width,
-        height = M.height,
-        col = (ui.width/2) - (M.width/2),
-        row = (ui.height/2) - (M.height/2),
-        border = "shadow",
-        anchor = 'NW',
-        style = 'minimal',
-    }
-    M.draw()
-
-    api.nvim_open_win(buf, 1, opts)
-
-    M.set_mapping()
 end
 
 function M.draw()
@@ -71,11 +75,18 @@ function M.key_pressed(key)
     for k, word in pairs(M.words) do
         if string.sub(M.memory, -string.len(word)) == word then
             match = true
+            M.found = M.found + 1
             M.lines[k] = string.rep(' ', M.width)
         end
     end
     if match == true then
         M.memory = ""
+        M.draw()
+    end
+
+    if M.found == M.height then
+        M.found = 0
+        M.fetch_new_lines()
         M.draw()
     end
 end
