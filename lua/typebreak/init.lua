@@ -8,10 +8,15 @@ M.memory = ""
 M.words = {}
 M.lines = {}
 M.width = 50
-M.height = 11
+M.height = 10
 
 function M.start()
     local ui = api.nvim_list_uis()[1]
+
+    -- reset
+    M.lines = {}
+    M.words = {}
+    M.memory = ""
 
     local response = curl.get("https://random-word-api.herokuapp.com/word?number=10")
     local body = response.body
@@ -29,7 +34,8 @@ function M.start()
         table.insert(M.lines, string.rep(' ', before) .. word .. string.rep(' ', after))
     end
 
-    local buf = api.nvim_create_buf(false, 0)
+    local buf = api.nvim_create_buf(false, true)
+    print("buf",vim.inspect(buf))
 
     M.buf = buf
 
@@ -72,7 +78,7 @@ end
 function M.set_mapping()
     local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u", "v", "w", "x", "y", "z" }
     for _,letter in pairs(keys) do
-        vim.api.nvim_buf_set_keymap(M.buf, 'n', letter, '<cmd>lua require("typebreak").key_pressed("' .. letter .. '")<CR>', {noremap = true, silent = true})
+        vim.api.nvim_buf_set_keymap(M.buf, 'i', letter, '<cmd>lua require("typebreak").key_pressed("' .. letter .. '")<CR>', {noremap = true, silent = true})
     end
 end
 
