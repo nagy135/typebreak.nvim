@@ -10,6 +10,7 @@ M.found = 0
 M.lines = {}
 M.width = 50
 M.height = 10
+M.timestamp = nil
 
 function M.start()
     local ui = api.nvim_list_uis()[1]
@@ -34,6 +35,7 @@ function M.start()
     api.nvim_open_win(M.buf, 1, opts)
 
     M.set_mapping()
+    M.timestamp = os.time()
 end
 
 function M.fetch_new_lines()
@@ -85,6 +87,11 @@ function M.key_pressed(key)
     end
 
     if M.found == M.height then
+
+        local new_time = os.time()
+        print(string.format("Done in : %.2f\n", new_time - M.timestamp))
+        M.timestamp = new_time
+
         M.found = 0
         M.fetch_new_lines()
         M.draw()
