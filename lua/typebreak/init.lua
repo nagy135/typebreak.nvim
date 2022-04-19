@@ -67,7 +67,30 @@ function M.draw()
     api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
 end
 
-function M.stats()
+function M.set_centered_text(text, text2)
+    local spacer = string.rep(' ', M.width / 2 - string.len(text) / 2)
+    local spacedText = spacer .. text
+
+    local spacedText2 = ""
+    if text2 ~= nil then
+        local spacer2 = string.rep(' ', M.width / 2 - string.len(text2) / 2)
+        spacedText2 = spacer2 .. text2
+    end
+
+    M.lines = {
+        "",
+        "",
+        "",
+        spacedText,
+        "",
+        spacedText2,
+        "",
+        "",
+        "",
+        ""
+    }
+
+    M.draw()
 end
 
 function M.key_pressed(key)
@@ -101,26 +124,22 @@ function M.key_pressed(key)
 
     if M.found == M.height then
         local timeString = string.format("Done in : %.2f", os.time() - M.timestamp)
-
-        api.nvim_buf_set_lines(M.buf, 0, 10, false, {
-            "", "", "", "", timeString, "", "", "", "", ""
-        })
-
-        M.draw()
+        M.set_centered_text(timeString, "To refresh press <CR> (Enter)")
     end
 end
 
 function M.set_mapping()
     local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "<BS>", "<CR>" }
     for _, letter in pairs(keys) do
-        api.nvim_set_keymap("i", letter, "", {
+        api.nvim_buf_set_keymap(M.buf, "i", letter, "", {
             noremap = true,
-            silent = true,
             callback = function()
                 M.key_pressed(letter)
             end,
         })
     end
 end
+
+M.start()
 
 return M
