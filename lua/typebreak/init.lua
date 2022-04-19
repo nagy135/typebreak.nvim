@@ -25,8 +25,8 @@ function M.start()
         relative = "editor",
         width = M.width,
         height = M.height,
-        col = (ui.width/2) - (M.width/2),
-        row = (ui.height/2) - (M.height/2),
+        col = (ui.width / 2) - (M.width / 2),
+        row = (ui.height / 2) - (M.height / 2),
         border = "shadow",
         anchor = 'NW',
         style = 'minimal',
@@ -49,14 +49,14 @@ function M.fetch_new_lines()
     local body = response.body
 
     local delimiter = ","
-    for match in (body..delimiter):gmatch("(.-)"..delimiter) do
+    for match in (body .. delimiter):gmatch("(.-)" .. delimiter) do
         match = string.gsub(match, '%W', '')
         table.insert(M.words, match)
     end
 
     for _, word in pairs(M.words) do
         local length = string.len(word)
-        local before = math.random(0, M.width-length)
+        local before = math.random(0, M.width - length)
         local after = M.width - length - before
         table.insert(M.lines, string.rep(' ', before) .. word .. string.rep(' ', after))
     end
@@ -67,12 +67,24 @@ function M.draw()
     api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
 end
 
+function M.stats()
+end
+
 function M.key_pressed(key)
-    if key == "<BS>" then
+    if key == "<BS>" then -- BACKSPACE
         M.memory = string.sub(M.memory, 0, -2)
         M.draw()
         return
+    elseif key == "<CR>" then -- RESET
+        api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
+        M.timestamp = os.time()
+
+        M.found = 0
+        M.fetch_new_lines()
+        M.draw()
+        return
     end
+
     M.memory = M.memory .. key
     local match = false
     for k, word in pairs(M.words) do
@@ -88,20 +100,19 @@ function M.key_pressed(key)
     end
 
     if M.found == M.height then
+        local timeString = string.format("Done in : %.2f\n", os.time() - M.timestamp)
 
-        local new_time = os.time()
-        print(string.format("Done in : %.2f\n", new_time - M.timestamp))
-        M.timestamp = new_time
+        api.nvim_buf_set_lines(M.buf, 0, 10, false, {
+            "", "", "", "", timeString, "", "", "", "", ""
+        })
 
-        M.found = 0
-        M.fetch_new_lines()
         M.draw()
     end
 end
 
 function M.set_mapping()
-    local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "<BS>" }
-    for _,letter in pairs(keys) do
+    local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "<BS>", "<CR>" }
+    for _, letter in pairs(keys) do
         api.nvim_set_keymap("i", letter, "", {
             noremap = true,
             silent = true,
