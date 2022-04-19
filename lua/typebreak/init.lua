@@ -100,7 +100,7 @@ function M.key_pressed(key)
     end
 
     if M.found == M.height then
-        local timeString = string.format("Done in : %.2f\n", os.time() - M.timestamp)
+        local timeString = string.format("Done in : %.2f", os.time() - M.timestamp)
 
         api.nvim_buf_set_lines(M.buf, 0, 10, false, {
             "", "", "", "", timeString, "", "", "", "", ""
