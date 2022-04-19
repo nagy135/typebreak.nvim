@@ -140,6 +140,4 @@ function M.set_mapping()
     end
 end
 
-M.start()
-
 return M
