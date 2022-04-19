@@ -36,6 +36,7 @@ function M.start()
 
     M.set_mapping()
     M.timestamp = os.time()
+    vim.cmd("startinsert")
 end
 
 function M.fetch_new_lines()
@@ -67,7 +68,7 @@ function M.draw()
 end
 
 function M.key_pressed(key)
-    if key == "BS" then
+    if key == "<BS>" then
         M.memory = string.sub(M.memory, 0, -2)
         M.draw()
         return
@@ -99,9 +100,9 @@ function M.key_pressed(key)
 end
 
 function M.set_mapping()
-    local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z" }
+    local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "<BS>" }
     for _,letter in pairs(keys) do
-        vim.api.nvim_set_keymap("i", letter, "", {
+        api.nvim_set_keymap("i", letter, "", {
             noremap = true,
             silent = true,
             callback = function()
@@ -109,13 +110,6 @@ function M.set_mapping()
             end,
         })
     end
-        vim.api.nvim_set_keymap("i", "<BS", "", {
-            noremap = true,
-            silent = true,
-            callback = function()
-                M.key_pressed("BS")
-            end,
-        })
 end
 
 return M
