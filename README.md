@@ -9,20 +9,22 @@ Take a brief break from current work and use it to speed up your typing speed.
 
 # Install
 
-use your favorite plugin manager:
+use your favorite plugin manager to install with [plenary](https://github.com/nvim-lua/plenary.nvim) as dependency:
 
 Plug
 ```viml
 Plug 'nagy135/typebreak.nvim'
+Plug 'nvim-lua/plenary.nvim'
 ```
 
 Packer
 ```lua
-use 'nagy135/typebreak.nvim'
+use { 'nagy135/typebreak.nvim', requires = 'nvim-lua/plenary.nvim' }
 
 -- with binding
 
 use { 'nagy135/typebreak.nvim',
+    requires = 'nvim-lua/plenary.nvim',
     config = function()
         vim.keymap.set('n', '<leader>tb', require('typebreak').start, { desc = "Typebreak" })
     end
