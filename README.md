@@ -10,16 +10,38 @@ Take a brief break from current work and use it to speed up your typing speed.
 
 use your favorite plugin manager:
 
+Plug
 ```
 Plug 'nagy135/typebreak.nvim'
 ```
 
+Packer
+```
+use 'nagy135/typebreak.nvim'
+
+-- with binding
+
+use { 'nagy135/typebreak.nvim',
+    config = function()
+        vim.keymap.set('n', '<leader>tb', require('typebreak').start, { desc = "Typebreak" })
+    end
+}
+```
+
 # Usage
 
-default bind `<leader>tb` opens new window, you enter insert mode with `i` and start typing words.
-Words dissapear once you type them, and when all are gone, new batch shows.
+Bind it first (using setup section bellow), doesnt bind to anything by default.
 
-If you wish to rebind it:
-```
+Bind opens new window, where you are instantly in insert mode and can start typing words you see.
+Words dissapear once you type them, and when type them all, you get report of how much time it took you and option to play 10 more words.
+When you done with it just close the buffer <kbd>ctrl</kbd> + <kbd>w</kbd>, <kbd>3</kbd>
+
+# Setup
+Bind start function to some key
+
+``` viml
 nnoremap <leader>tb :lua require("typebreak").start()<CR>
+```
+```lua
+vim.keymap.set('n', '<leader>tb', require('typebreak').start, { desc = "Typebreak" })
 ```
