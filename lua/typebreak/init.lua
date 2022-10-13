@@ -129,13 +129,11 @@ function M.key_pressed(key)
 end
 
 function M.set_mapping()
-    local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "<BS>", "<CR>" }
+    local keys = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
+        "u", "v", "w", "x", "y", "z", "<BS>", "<CR>" }
     for _, letter in pairs(keys) do
-        api.nvim_buf_set_keymap(M.buf, "i", letter, "", {
-            noremap = true,
-            callback = function()
-                M.key_pressed(letter)
-            end,
+        vim.keymap.set("i", letter, function() M.key_pressed(letter) end, {
+            buffer = 0
         })
     end
 end
