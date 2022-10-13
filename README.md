@@ -2,8 +2,8 @@
 
 ![](https://tokei.rs/b1/github/nagy135/typebreak.nvim?category=code)
 
-![screen](screen.png)
-![screen_summary](screen_summary.png)
+![screen](doc/screen.png)
+![screen_summary](doc/screen_summary.png)
 
 Take a brief break from current work and use it to speed up your typing speed.
 
