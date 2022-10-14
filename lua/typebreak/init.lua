@@ -32,7 +32,7 @@ function M.start()
         style = 'minimal',
     }
 
-    api.nvim_open_win(M.buf, 1, opts)
+    api.nvim_open_win(M.buf, true, opts)
 
     M.set_mapping()
     M.timestamp = os.time()
@@ -46,6 +46,10 @@ function M.fetch_new_lines()
     M.memory = ""
 
     local response = curl.get("https://random-word-api.herokuapp.com/word?number=10")
+    if response == nil then
+        print('could not fetch words from herokuapp.com')
+        return
+    end
     local body = response.body
 
     local delimiter = ","
