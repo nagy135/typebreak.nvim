@@ -127,7 +127,7 @@ function M.key_pressed(key)
     end
 
     if M.found == M.height then
-        local timeString = string.format("Done in : %.2f", os.time() - M.timestamp)
+        local timeString = string.format("Done in : %d seconds", os.time() - M.timestamp)
         M.set_centered_text(timeString, "To refresh press <CR> (Enter)")
     end
 end
