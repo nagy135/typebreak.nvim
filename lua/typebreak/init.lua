@@ -2,6 +2,7 @@ local M = {}
 
 local api = vim.api
 local curl = require("plenary.curl")
+local state = require('typebreak.state')
 
 M.buf = nil
 M.memory = ""
@@ -14,6 +15,8 @@ M.timestamp = nil
 
 function M.start()
     local ui = api.nvim_list_uis()[1]
+
+    state.load()
 
     M.fetch_new_lines()
 
@@ -71,25 +74,32 @@ function M.draw()
     api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
 end
 
-function M.set_centered_text(text, text2)
-    local spacer = string.rep(' ', M.width / 2 - string.len(text) / 2)
-    local spacedText = spacer .. text
+-- TODO: generalize this using table and loop
+function M.set_centered_text(title_text, time_text, stats_text)
+    local spacer1 = string.rep(' ', M.width / 2 - string.len(title_text) / 2)
+    local title_text_final = spacer1 .. title_text
 
-    local spacedText2 = ""
-    if text2 ~= nil then
-        local spacer2 = string.rep(' ', M.width / 2 - string.len(text2) / 2)
-        spacedText2 = spacer2 .. text2
+    local time_text_final = ""
+    if time_text ~= nil then
+        local spacer2 = string.rep(' ', M.width / 2 - string.len(time_text) / 2)
+        time_text_final = spacer2 .. time_text
+    end
+
+    local stats_text_final = ""
+    if stats_text ~= nil then
+        local spacer3 = string.rep(' ', M.width / 2 - string.len(stats_text) / 2)
+        stats_text_final = spacer3 .. stats_text
     end
 
     M.lines = {
         "",
         "",
         "",
-        spacedText,
+        title_text_final,
         "",
-        spacedText2,
+        time_text_final,
         "",
-        "",
+        stats_text_final,
         "",
         ""
     }
@@ -127,8 +137,13 @@ function M.key_pressed(key)
     end
 
     if M.found == M.height then
-        local timeString = string.format("Done in : %d seconds", os.time() - M.timestamp)
-        M.set_centered_text(timeString, "To refresh press <CR> (Enter)")
+        local time_taken = os.time() - M.timestamp
+        M.set_centered_text(
+            string.format("Done in : %d", time_taken),
+            "To refresh press <CR> (Enter)",
+            state.repr()
+        )
+        state.record(time_taken)
     end
 end
 
