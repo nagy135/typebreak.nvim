@@ -3,6 +3,7 @@
 ![](https://tokei.rs/b1/github/nagy135/typebreak.nvim?category=code)
 
 ![screen](doc/screen.png)
+[![asciicast](https://asciinema.org/a/Bmn6XjaE2tuTeAcB3D69pZBWn.svg)](https://asciinema.org/a/Bmn6XjaE2tuTeAcB3D69pZBWn)
 ![screen_summary](doc/screen_summary.png)
 
 Take a brief break from current work and use it to speed up your typing speed.
