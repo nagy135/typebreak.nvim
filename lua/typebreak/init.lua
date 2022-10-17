@@ -4,11 +4,14 @@ local api = vim.api
 local curl = require("plenary.curl")
 local state = require('typebreak.state')
 
+local utils = require("typebreak.utils")
+
 M.buf = nil
 M.memory = ""
 M.words = {}
 M.found = 0
 M.lines = {}
+M.highlight_starts = {}
 M.width = 50
 M.height = 10
 M.timestamp = nil
@@ -19,6 +22,7 @@ function M.start()
     M.words = {}
     M.found = 0
     M.lines = {}
+    M.highlight_starts = {}
     M.width = 50
     M.height = 10
     M.timestamp = nil
@@ -55,6 +59,8 @@ function M.fetch_new_lines()
     -- reset
     M.lines = {}
     M.words = {}
+    M.highlight_starts = {}
+    M.offsets = {}
     M.memory = ""
 
     local response = curl.get("https://random-word-api.herokuapp.com/word?number=10")
@@ -68,6 +74,7 @@ function M.fetch_new_lines()
     for match in (body .. delimiter):gmatch("(.-)" .. delimiter) do
         match = string.gsub(match, '%W', '')
         table.insert(M.words, match)
+        table.insert(M.highlight_starts, false)
     end
 
     for _, word in pairs(M.words) do
@@ -75,12 +82,18 @@ function M.fetch_new_lines()
         local before = math.random(0, M.width - length)
         local after = M.width - length - before
         table.insert(M.lines, string.rep(' ', before) .. word .. string.rep(' ', after))
+        table.insert(M.offsets, before)
     end
 
 end
 
 function M.draw()
     api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
+    for k,match_len in pairs(M.highlight_starts) do
+        if match_len ~= false then
+            utils.highlight_text(k-1, M.offsets[k], M.offsets[k]+match_len)
+        end
+    end
 end
 
 -- TODO: generalize this using table and loop
@@ -119,8 +132,7 @@ end
 function M.key_pressed(key)
     if key == "<BS>" then -- BACKSPACE
         M.memory = string.sub(M.memory, 0, -2)
-        M.draw()
-        return
+        key = ""
     elseif key == "<CR>" then -- RESET
         api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
         M.timestamp = os.time()
@@ -132,18 +144,40 @@ function M.key_pressed(key)
     end
 
     M.memory = M.memory .. key
+
+    -- reset highlights
+    for k,_ in pairs(M.highlight_starts) do
+        M.highlight_starts[k] = false
+    end
+    utils.reset_highlights()
+
     local match = false
+    local partial_match = false
     for k, word in pairs(M.words) do
         if string.sub(M.memory, -string.len(word)) == word then
             match = true
             M.found = M.found + 1
             M.lines[k] = string.rep(' ', M.width)
+        else
+            -- NOTE: we iterate to find smaller match
+            for x=string.len(word),1,-1 do
+                local part = string.sub(word, 0, x)
+                local part_len = string.len(part)
+                if string.sub(M.memory, -part_len) == part then
+                    M.highlight_starts[k] = part_len
+                    partial_match = true
+                    break
+                end
+            end
         end
     end
     if match == true then
+        for hk,_ in pairs(M.highlight_starts) do
+            M.highlight_starts[hk] = false
+        end
         M.memory = ""
-        M.draw()
     end
+        M.draw()
 
     if M.found == M.height then
         local time_taken = os.time() - M.timestamp
