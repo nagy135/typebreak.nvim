@@ -6,17 +6,8 @@ local state = require('typebreak.state')
 
 local utils = require("typebreak.utils")
 
-M.buf = nil
-M.memory = ""
-M.words = {}
-M.found = 0
-M.lines = {}
-M.highlight_starts = {}
-M.width = 50
-M.height = 10
-M.timestamp = nil
 
-function M.start()
+local reset_state = function()
     M.buf = nil
     M.memory = ""
     M.words = {}
@@ -26,6 +17,12 @@ function M.start()
     M.width = 50
     M.height = 10
     M.timestamp = nil
+end
+
+reset_state()
+
+function M.start()
+    reset_state()
 
     local ui = api.nvim_list_uis()[1]
 
@@ -89,9 +86,9 @@ end
 
 function M.draw()
     api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
-    for k,match_len in pairs(M.highlight_starts) do
+    for k, match_len in pairs(M.highlight_starts) do
         if match_len ~= false then
-            utils.highlight_text(k-1, M.offsets[k], M.offsets[k]+match_len)
+            utils.highlight_text(k - 1, M.offsets[k], M.offsets[k] + match_len)
         end
     end
 end
@@ -146,13 +143,12 @@ function M.key_pressed(key)
     M.memory = M.memory .. key
 
     -- reset highlights
-    for k,_ in pairs(M.highlight_starts) do
+    for k, _ in pairs(M.highlight_starts) do
         M.highlight_starts[k] = false
     end
     utils.reset_highlights()
 
     local match = false
-    local partial_match = false
     for k, word in pairs(M.words) do
         if string.sub(M.memory, -string.len(word)) == word then
             match = true
@@ -160,29 +156,28 @@ function M.key_pressed(key)
             M.lines[k] = string.rep(' ', M.width)
         else
             -- NOTE: we iterate to find smaller match
-            for x=string.len(word),1,-1 do
+            for x = string.len(word), 1, -1 do
                 local part = string.sub(word, 0, x)
                 local part_len = string.len(part)
                 if string.sub(M.memory, -part_len) == part then
                     M.highlight_starts[k] = part_len
-                    partial_match = true
                     break
                 end
             end
         end
     end
     if match == true then
-        for hk,_ in pairs(M.highlight_starts) do
+        for hk, _ in pairs(M.highlight_starts) do
             M.highlight_starts[hk] = false
         end
         M.memory = ""
     end
-        M.draw()
+    M.draw()
 
     if M.found == M.height then
         local time_taken = os.time() - M.timestamp
         M.set_centered_text(
-            string.format("Done in : %d", time_taken),
+            string.format("Done in : %d seconds", time_taken),
             "To refresh press <CR> (Enter)",
             state.repr(time_taken)
         )

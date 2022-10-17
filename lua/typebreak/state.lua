@@ -30,11 +30,11 @@ M.repr = function(time)
         and M.previous_times[#M.previous_times]
         or "N/A"
     local avg = #M.previous_times > 0
-        and (
-        (time + utils.table_sum(M.previous_times)
-            ) / (
-            #M.previous_times + 1)
-        )
+        and string.format("%.2f", (
+            (time + utils.table_sum(M.previous_times)
+                ) / (
+                #M.previous_times + 1)
+            ))
         or "N/A"
     return "Last: " .. last .. ', Avg: ' .. avg
 end

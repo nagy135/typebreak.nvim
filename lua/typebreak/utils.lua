@@ -7,12 +7,13 @@ M.table_sum = function(table)
     end
     return sum
 end
-local tmpnamespace = vim.api.nvim_create_namespace('typebreak')
+
+local ns = vim.api.nvim_create_namespace('typebreak')
 
 M.highlight_text = function(row, col_start, col_end)
     vim.api.nvim_buf_set_extmark(
         0,
-        tmpnamespace,
+        ns,
         row,
         col_start,
         {
@@ -26,7 +27,7 @@ end
 M.reset_highlights = function()
     vim.api.nvim_buf_clear_namespace(
         0,
-        tmpnamespace,
+        ns,
         0,
         -1
     )
