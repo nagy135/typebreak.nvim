@@ -41,7 +41,7 @@ function M.start()
         height = M.height,
         col = (ui.width / 2) - (M.width / 2),
         row = (ui.height / 2) - (M.height / 2),
-        border = "shadow",
+        border = "rounded",
         anchor = 'NW',
         style = 'minimal',
     }
