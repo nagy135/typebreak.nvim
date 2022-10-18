@@ -114,12 +114,12 @@ function M.set_centered_text(title_text, time_text, stats_text)
     M.lines = {
         "",
         "",
-        "",
         title_text_final,
         "",
         time_text_final,
         "",
         stats_text_final,
+        "",
         "",
         ""
     }
