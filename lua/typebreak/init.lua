@@ -18,6 +18,7 @@ local reset_state = function()
     M.width = 50
     M.height = 10
     M.timestamp = nil
+    M.end_time = nil
 end
 
 reset_state()
@@ -85,6 +86,19 @@ function M.fetch_new_lines()
 
 end
 
+function M.reset_redraw_stats()
+    state.reset()
+    api.nvim_buf_set_lines(
+        M.buf,
+        6,
+        7,
+        false,
+        {
+            utils.center_text(state.repr(M.end_time), M.width)
+        }
+    )
+end
+
 function M.draw()
     api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
     for k, match_len in pairs(M.highlight_starts) do
@@ -135,7 +149,7 @@ function M.key_pressed(key)
 
     if M.round_done then
         if key == 'r' then
-            state.reset()
+            M.reset_redraw_stats()
         end
         return
     end
