@@ -95,39 +95,23 @@ function M.draw()
 end
 
 -- TODO: generalize this using table and loop
-function M.set_centered_text(title_text, time_text, stats_text)
-    local spacer1 = string.rep(' ', M.width / 2 - string.len(title_text) / 2)
-    local title_text_final = spacer1 .. title_text
-
-    local time_text_final = ""
-    if time_text ~= nil then
-        local spacer2 = string.rep(' ', M.width / 2 - string.len(time_text) / 2)
-        time_text_final = spacer2 .. time_text
-    end
-
-    local stats_text_final = ""
-    if stats_text ~= nil then
-        local spacer3 = string.rep(' ', M.width / 2 - string.len(stats_text) / 2)
-        stats_text_final = spacer3 .. stats_text
-    end
-
-    local reset_text = "to reset stats press `r`"
-    local spacer4 = string.rep(' ', M.width / 2 - string.len(reset_text) / 2)
-    local reset_text_final = spacer4 .. reset_text
-
+function M.set_summary(title_text, time_text, stats_text)
     M.lines = {
         "",
         "",
-        title_text_final,
+        utils.center_text(title_text, M.width),
         "",
-        time_text_final,
+        stats_text ~= nil
+            and utils.center_text(time_text, M.width)
+            or "",
         "",
-        stats_text_final,
-        reset_text_final,
+        stats_text ~= nil
+            and utils.center_text(stats_text, M.width)
+            or "",
+        utils.center_text("to reset press `r`", M.width),
         "",
         ""
     }
-
     M.draw()
 end
 
@@ -191,14 +175,14 @@ function M.key_pressed(key)
     M.draw()
 
     if M.found == M.height then
-        local time_taken = os.time() - M.timestamp
-        M.set_centered_text(
-            string.format("Done in : %d seconds", time_taken),
+        M.end_time = os.time() - M.timestamp
+        M.set_summary(
+            string.format("Done in : %d seconds", M.end_time),
             "To refresh press <CR> (Enter)",
-            state.repr(time_taken)
+            state.repr(M.end_time)
         )
         M.round_done = true
-        state.record(time_taken)
+        state.record(M.end_time)
     end
 end
 

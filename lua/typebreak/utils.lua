@@ -8,6 +8,10 @@ M.table_sum = function(table)
     return sum
 end
 
+M.center_text = function(text, width)
+    return string.rep(' ', width / 2 - string.len(text) / 2) .. text
+end
+
 local ns = vim.api.nvim_create_namespace('typebreak')
 
 M.highlight_text = function(row, col_start, col_end)
