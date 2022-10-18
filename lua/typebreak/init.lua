@@ -8,6 +8,7 @@ local utils = require("typebreak.utils")
 
 
 local reset_state = function()
+    M.round_done = false
     M.buf = nil
     M.memory = ""
     M.words = {}
@@ -131,12 +132,20 @@ function M.key_pressed(key)
         M.memory = string.sub(M.memory, 0, -2)
         key = ""
     elseif key == "<CR>" then -- RESET
+        if not M.round_done then
+            return
+        end
         api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
-        M.timestamp = os.time()
 
         M.found = 0
         M.fetch_new_lines()
+        M.round_done = false
+        M.timestamp = os.time()
         M.draw()
+        return
+    end
+
+    if M.round_done then
         return
     end
 
@@ -181,6 +190,7 @@ function M.key_pressed(key)
             "To refresh press <CR> (Enter)",
             state.repr(time_taken)
         )
+        M.round_done = true
         state.record(time_taken)
     end
 end
