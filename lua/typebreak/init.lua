@@ -111,6 +111,10 @@ function M.set_centered_text(title_text, time_text, stats_text)
         stats_text_final = spacer3 .. stats_text
     end
 
+    local reset_text = "to reset stats press `r`"
+    local spacer4 = string.rep(' ', M.width / 2 - string.len(reset_text) / 2)
+    local reset_text_final = spacer4 .. reset_text
+
     M.lines = {
         "",
         "",
@@ -119,7 +123,7 @@ function M.set_centered_text(title_text, time_text, stats_text)
         time_text_final,
         "",
         stats_text_final,
-        "",
+        reset_text_final,
         "",
         ""
     }
@@ -146,6 +150,9 @@ function M.key_pressed(key)
     end
 
     if M.round_done then
+        if key == 'r' then
+            state.reset()
+        end
         return
     end
 

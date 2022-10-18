@@ -13,6 +13,10 @@ local load_json_from_path = function(path)
     return vim.fn.json_decode(Path:new(path):read())
 end
 
+local store_state = function()
+    Path:new(storage_path):write(vim.fn.json_encode(M.previous_times), "w")
+end
+
 M.load = function()
     local ok, result = pcall(load_json_from_path, storage_path)
     if ok then
@@ -22,7 +26,12 @@ end
 
 M.record = function(time)
     table.insert(M.previous_times, time)
-    Path:new(storage_path):write(vim.fn.json_encode(M.previous_times), "w")
+    store_state()
+end
+
+M.reset = function()
+    M.previous_times = {}
+    store_state()
 end
 
 M.repr = function(time)
