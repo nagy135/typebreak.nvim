@@ -11,6 +11,7 @@
 
 <details>
 <summary>Summary stats</summary>
+<img width="700" alt="Summary stats" src="doc/stats_screen.png">
 ![screen](doc/stats_screen.png)
 </details>
 
