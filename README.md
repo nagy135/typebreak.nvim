@@ -6,13 +6,12 @@
 
 <details>
 <summary>Screencast asciinema</summary>
-[![asciicast](https://asciinema.org/a/Bmn6XjaE2tuTeAcB3D69pZBWn.svg)](https://asciinema.org/a/Bmn6XjaE2tuTeAcB3D69pZBWn)
+![asciicast](https://asciinema.org/a/Bmn6XjaE2tuTeAcB3D69pZBWn.svg)
 </details>
 
 <details>
 <summary>Summary stats</summary>
 <img width="700" alt="Summary stats" src="doc/stats_screen.png">
-![screen](doc/stats_screen.png)
 </details>
 
 Take a brief break from current work and use it to speed up your typing speed.
