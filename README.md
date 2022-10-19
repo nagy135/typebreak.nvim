@@ -2,8 +2,17 @@
 
 ![](https://tokei.rs/b1/github/nagy135/typebreak.nvim?category=code)
 
-![screen](doc/screen.png)
+![screen](doc/header_screen.png)
+
+<details>
+<summary>Screencast asciinema</summary>
 [![asciicast](https://asciinema.org/a/Bmn6XjaE2tuTeAcB3D69pZBWn.svg)](https://asciinema.org/a/Bmn6XjaE2tuTeAcB3D69pZBWn)
+</details>
+
+<details>
+<summary>Summary stats</summary>
+![screen](doc/stats_screen.png)
+</details>
 
 Take a brief break from current work and use it to speed up your typing speed.
 
