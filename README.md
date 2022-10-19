@@ -44,11 +44,12 @@ use { 'nagy135/typebreak.nvim',
 
 # Usage
 
-Bind it first (using setup section bellow), doesnt bind to anything by default.
+Bind it first! (using setup section bellow), doesnt bind to anything by default.
 
-Bind opens new window, where you are instantly in insert mode and can start typing words you see.
-Words dissapear once you type them, and when type them all, you get report of how much time it took you and option to play 10 more words.
-When you done with it just close the buffer <kbd>ctrl</kbd> + <kbd>w</kbd>, <kbd>q</kbd>
+Pressing bind opens new floating window with words and puts you in insert mode.
+You can instantly start typing and words are getting highlighted as you type them, then dissapear.
+Once you type them all, you see summary prompt with stats and option to play again.
+Close the window whenever you want <kbd>ctrl</kbd> + <kbd>w</kbd>, <kbd>q</kbd>
 
 # Setup
 Bind start function to some key
