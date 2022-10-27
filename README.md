@@ -4,12 +4,10 @@
 
 ![screen](doc/header_screen.png)
 
-<details>
-<summary>Screencast asciinema</summary>
-
-![asciicast](https://asciinema.org/a/Bmn6XjaE2tuTeAcB3D69pZBWn.svg)
-
-</details>
+<!-- <details> -->
+<!-- <summary>Screencast asciinema</summary> -->
+<!-- ![asciicast](https://asciinema.org/a/Bmn6XjaE2tuTeAcB3D69pZBWn.svg) -->
+<!-- </details> -->
 
 <details>
 <summary>Summary stats</summary>
