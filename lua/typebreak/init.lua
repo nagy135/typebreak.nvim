@@ -3,9 +3,11 @@ local M = {}
 local api = vim.api
 local curl = require("plenary.curl")
 local state = require('typebreak.state')
+local dictionary = require('typebreak.dictionary')
 
 local utils = require("typebreak.utils")
 
+local N_WORDS = 10
 
 local reset_state = function()
     M.round_done = false
@@ -16,14 +18,17 @@ local reset_state = function()
     M.lines = {}
     M.highlight_starts = {}
     M.width = 50
-    M.height = 10
+    M.height = N_WORDS
     M.timestamp = nil
     M.end_time = nil
 end
 
+local local_dictionary = false
+
 reset_state()
 
-function M.start()
+function M.start(use_local_dictionary)
+    local_dictionary = use_local_dictionary or false
     reset_state()
 
     local ui = api.nvim_list_uis()[1]
@@ -62,18 +67,21 @@ function M.fetch_new_lines()
     M.offsets = {}
     M.memory = ""
 
-    local response = curl.get("https://random-word-api.herokuapp.com/word?number=10")
-    if response == nil then
-        print('could not fetch words from herokuapp.com')
-        return
-    end
-    local body = response.body
-
-    local delimiter = ","
-    for match in (body .. delimiter):gmatch("(.-)" .. delimiter) do
-        match = string.gsub(match, '%W', '')
-        table.insert(M.words, match)
-        table.insert(M.highlight_starts, false)
+    if local_dictionary then
+        M.words = dictionary.pick_random_words(N_WORDS)
+    else
+        local response = curl.get("https://random-word-api.herokuapp.com/word?number=" .. N_WORDS)
+        if response == nil then
+            print('could not fetch words from herokuapp.com')
+            return
+        end
+        local body = response.body
+        local delimiter = ","
+        for match in (body .. delimiter):gmatch("(.-)" .. delimiter) do
+            match = string.gsub(match, '%W', '')
+            table.insert(M.words, match)
+            table.insert(M.highlight_starts, false)
+        end
     end
 
     for _, word in pairs(M.words) do
@@ -100,7 +108,7 @@ function M.reset_redraw_stats()
 end
 
 function M.draw()
-    api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
+    api.nvim_buf_set_lines(M.buf, 0, N_WORDS, false, M.lines)
     for k, match_len in pairs(M.highlight_starts) do
         if match_len ~= false then
             utils.highlight_text(k - 1, M.offsets[k], M.offsets[k] + match_len)
@@ -137,7 +145,7 @@ function M.key_pressed(key)
         if not M.round_done then
             return
         end
-        api.nvim_buf_set_lines(M.buf, 0, 10, false, M.lines)
+        api.nvim_buf_set_lines(M.buf, 0, N_WORDS, false, M.lines)
 
         M.found = 0
         M.fetch_new_lines()
