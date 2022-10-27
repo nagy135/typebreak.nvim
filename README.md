@@ -72,6 +72,9 @@ require("typebreak").start(true)
 ```
 
 Or better, bind it
+```lua
+vim.keymap.set('n', '<leader><leader>tb', function() require('typebreak').start(true) end, { desc = "Typebreak (local dictionary)" })
+```
 ```viml
 nnoremap <leader><leader>tb :lua require("typebreak").start(true)<CR>
 ```
