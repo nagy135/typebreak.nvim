@@ -59,4 +59,30 @@ nnoremap <leader>tb :lua require("typebreak").start()<CR>
 ```
 ```lua
 vim.keymap.set('n', '<leader>tb', require('typebreak').start, { desc = "Typebreak" })
+
+```
+
+# Custom dictionary
+There is also option to NOT use [herokuapp](https://random-word-api.herokuapp.com/word?number=10) for fetching words.
+By default we use it but if you wanna use local dictionary instead, you need to do following:
+
+First you simply pass true to start function
+```lua
+require("typebreak").start(true)
+```
+
+Or better, bind it
+```viml
+nnoremap <leader><leader>tb :lua require("typebreak").start(true)<CR>
+```
+
+This uses 200 words long dictionary shipped with plugin.
+
+If you want to extend or replace those words you need to call `setup()` any time before calling `start()`
+```lua
+require('typebreak').setup({
+    ["dictionary"] = {"tik", "tak", "toe"},
+    -- also boolean flag if you want to replace default ones with your own only
+    -- ["replace_dictionary"] = true
+})
 ```
