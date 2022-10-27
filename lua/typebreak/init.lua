@@ -218,4 +218,14 @@ function M.set_mapping()
     end
 end
 
+function M.setup(options)
+    local opts = options or {}
+
+    if opts.dictionary ~= nil then
+        local replace = opts.replace_dictionary or false
+        dictionary.extend_or_replace_dictionary(opts.dictionary, replace)
+    end
+
+end
+
 return M

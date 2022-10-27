@@ -1,6 +1,8 @@
+local utils = require('typebreak.utils')
+
 local M = {}
 
-local simple_dictionary = {
+local local_dictionary = {
     'code',
     'floor',
     'impound',
@@ -206,9 +208,18 @@ local simple_dictionary = {
 M.pick_random_words = function(n)
     local picked = {}
     for _ = 1, n, 1 do
-        table.insert(picked, simple_dictionary[math.random(1, #simple_dictionary)])
+        table.insert(picked, local_dictionary[math.random(1, #local_dictionary)])
     end
     return picked
+end
+
+M.extend_or_replace_dictionary = function(new_dictionary, replace)
+    local do_replace = replace or false
+    if do_replace then
+        local_dictionary = new_dictionary
+    else
+        utils.extend_table(local_dictionary, new_dictionary)
+    end
 end
 
 

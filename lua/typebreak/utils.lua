@@ -37,4 +37,11 @@ M.reset_highlights = function()
     )
 end
 
+M.extend_table = function(a, b)
+    for _, v in ipairs(b) do
+        table.insert(a, v)
+    end
+    return a
+end
+
 return M
