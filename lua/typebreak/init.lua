@@ -70,7 +70,7 @@ function M.fetch_new_lines()
     if local_dictionary then
         M.words = dictionary.pick_random_words(N_WORDS)
     else
-        local response = curl.get("https://random-word-api.herokuapp.com/word?number=" .. N_WORDS)
+        local response = curl.get("https://random-word-api.herokuapp.com/w?n=" .. N_WORDS)
         if response == nil then
             print('could not fetch words from herokuapp.com')
             return
