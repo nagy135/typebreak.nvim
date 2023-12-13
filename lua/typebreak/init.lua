@@ -183,7 +183,6 @@ function M.key_pressed(key)
 	end
 	if match == true then
 		for hk, _ in pairs(M.highlight_starts) do
-			print("resetting highlights", hk)
 			M.highlight_starts[hk] = false
 		end
 		M.memory = ""
