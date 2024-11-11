@@ -203,6 +203,7 @@ end
 
 function M.set_mapping()
 	local keys = {
+		" ",
 		"a",
 		"b",
 		"c",
