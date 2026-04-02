@@ -38,6 +38,7 @@ local LETTERS = {
 	"y",
 	"z",
 }
+local CONTROL_KEYS = { "<BS>", "<C-h>", "<CR>" }
 
 local active_session
 
@@ -183,7 +184,7 @@ local function handle_key(session, key)
 		return
 	end
 
-	if key == "<BS>" then
+	if key == "<BS>" or key == "<C-h>" then
 		session.memory = session.memory:sub(1, -2)
 		key = ""
 	elseif key == "<CR>" then
@@ -266,7 +267,7 @@ local function set_mappings(session)
 		})
 	end
 
-	for _, key in ipairs({ "<BS>", "<CR>" }) do
+	for _, key in ipairs(CONTROL_KEYS) do
 		vim.keymap.set("i", key, function()
 			handle_key(session, key)
 		end, {
