@@ -1,245 +1,358 @@
-local M = {}
-
 local api = vim.api
-local curl = require("plenary.curl")
-local state = require("typebreak.state")
 local dictionary = require("typebreak.dictionary")
-
+local state = require("typebreak.state")
 local utils = require("typebreak.utils")
 
+local M = {}
+
 local N_WORDS = 10
+local WIDTH = 50
+local REMOTE_WORDS_URL = "https://random-word-api.herokuapp.com/word?number=%d"
+local hrtime = (vim.uv or vim.loop).hrtime
+local LETTERS = {
+	" ",
+	"a",
+	"b",
+	"c",
+	"d",
+	"e",
+	"f",
+	"g",
+	"h",
+	"i",
+	"j",
+	"k",
+	"l",
+	"m",
+	"n",
+	"o",
+	"p",
+	"q",
+	"r",
+	"s",
+	"t",
+	"u",
+	"v",
+	"w",
+	"x",
+	"y",
+	"z",
+}
+local CONTROL_KEYS = { "<BS>", "<C-h>", "<CR>" }
 
-local reset_state = function()
-	M.round_done = false
-	M.buf = nil
-	M.memory = ""
-	M.words = {}
-	M.found = 0
-	M.lines = {}
-	M.highlight_starts = {}
-	M.ignore_lines = {}
-	M.width = 50
-	M.height = N_WORDS
-	M.timestamp = nil
-	M.end_time = nil
+local active_session
+
+local function sanitize_word(word)
+	return tostring(word):lower():gsub("[^%a]", "")
 end
 
-local local_dictionary = false
+local function session_is_valid(session)
+	return session ~= nil
+		and session.buf ~= nil
+		and session.win ~= nil
+		and api.nvim_buf_is_valid(session.buf)
+		and api.nvim_win_is_valid(session.win)
+end
 
-reset_state()
+local function fetch_remote_words()
+	if vim.fn.executable("curl") ~= 1 or vim.system == nil then
+		return nil
+	end
 
-function M.start(use_local_dictionary)
-	local_dictionary = use_local_dictionary or false
-	reset_state()
+	local result = vim.system({
+		"curl",
+		"-fsSL",
+		string.format(REMOTE_WORDS_URL, N_WORDS),
+	}, { text = true }):wait()
 
-	local ui = api.nvim_list_uis()[1]
+	if result.code ~= 0 or result.stdout == nil or result.stdout == "" then
+		return nil
+	end
 
-	state.load()
+	local ok, decoded = pcall(vim.json.decode, result.stdout)
+	if not ok or type(decoded) ~= "table" then
+		return nil
+	end
 
-	M.fetch_new_lines()
+	local words = {}
+	for _, word in ipairs(decoded) do
+		local cleaned = sanitize_word(word)
+		if cleaned ~= "" then
+			table.insert(words, cleaned)
+		end
+	end
 
-	M.buf = api.nvim_create_buf(false, true)
+	if #words ~= N_WORDS then
+		return nil
+	end
 
-	M.draw()
+	return words
+end
 
-	local opts = {
-		relative = "editor",
-		width = M.width,
-		height = M.height,
-		col = (ui.width / 2) - (M.width / 2),
-		row = (ui.height / 2) - (M.height / 2),
-		border = "rounded",
-		anchor = "NW",
-		style = "minimal",
+local function pick_words(use_local_dictionary)
+	if not use_local_dictionary then
+		local words = fetch_remote_words()
+		if words ~= nil then
+			return words
+		end
+	end
+
+	local words = dictionary.pick_random_words(N_WORDS)
+	for i, word in ipairs(words) do
+		words[i] = sanitize_word(word)
+	end
+	return words
+end
+
+local function reset_round(session)
+	session.round_done = false
+	session.memory = ""
+	session.words = pick_words(session.use_local_dictionary)
+	session.char_count = 0
+	session.found = 0
+	session.lines = {}
+	session.highlight_starts = {}
+	session.matched = {}
+	session.offsets = {}
+	session.started_at = hrtime()
+	session.end_time = nil
+
+	for index, word in ipairs(session.words) do
+		local length = #word
+		local before = math.random(0, math.max(0, session.width - length))
+		local after = session.width - length - before
+		session.char_count = session.char_count + length
+
+		session.lines[index] = string.rep(" ", before) .. word .. string.rep(" ", after)
+		session.highlight_starts[index] = false
+		session.offsets[index] = before
+	end
+end
+
+local function draw(session)
+	api.nvim_buf_set_lines(session.buf, 0, -1, false, session.lines)
+	utils.clear_highlights(session.buf)
+
+	for index, match_length in ipairs(session.highlight_starts) do
+		if match_length ~= false then
+			utils.highlight_text(session.buf, index - 1, session.offsets[index], session.offsets[index] + match_length)
+		end
+	end
+
+	api.nvim_win_set_cursor(session.win, { 1, 0 })
+end
+
+local function set_summary(session)
+	local function format_stat(label, seconds)
+		if seconds == nil then
+			return string.format("%s: n/a", label)
+		end
+
+		local elapsed = math.max(seconds, 0.001)
+		local wpm = math.floor(((session.char_count / 5) / (elapsed / 60)) + 0.5)
+		return string.format("%s: %.1f (%dwpm)", label, seconds, wpm)
+	end
+
+	session.lines = {
+		"",
+		utils.center_text("<CR> restart | q quit | r reset stats", session.width),
+		"",
+		utils.center_text(format_stat("current", session.end_time), session.width),
+		utils.center_text(format_stat("last", state.last_time()), session.width),
+		utils.center_text(format_stat("average", state.average_time(session.end_time)), session.width),
+		"",
+		"",
+		"",
 	}
-
-	api.nvim_open_win(M.buf, true, opts)
-
-	M.set_mapping()
-	M.timestamp = os.time()
-	vim.cmd("startinsert")
+	draw(session)
 end
 
-function M.fetch_new_lines()
-	-- reset
-	M.lines = {}
-	M.words = {}
-	M.highlight_starts = {}
-	M.offsets = {}
-	M.memory = ""
-
-	if local_dictionary then
-		M.words = dictionary.pick_random_words(N_WORDS)
-	else
-		local response = curl.get("https://random-word-api.herokuapp.com/word?number=" .. N_WORDS)
-		if response == nil then
-			print("could not fetch words from herokuapp.com")
-			return
-		end
-		local body = response.body
-		local delimiter = ","
-		for match in (body .. delimiter):gmatch("(.-)" .. delimiter) do
-			match = string.gsub(match, "%W", "")
-			table.insert(M.words, match)
-			table.insert(M.highlight_starts, false)
-		end
-	end
-
-	for _, word in pairs(M.words) do
-		local length = string.len(word)
-		local before = math.random(0, M.width - length)
-		local after = M.width - length - before
-		table.insert(M.lines, string.rep(" ", before) .. word .. string.rep(" ", after))
-		table.insert(M.offsets, before)
-	end
-end
-
-function M.reset_redraw_stats()
+local function reset_stats(session)
 	state.reset()
-	api.nvim_buf_set_lines(M.buf, 6, 7, false, {
-		utils.center_text(state.repr(M.end_time), M.width),
-	})
+	set_summary(session)
 end
 
-function M.draw()
-	api.nvim_buf_set_lines(M.buf, 0, N_WORDS, false, M.lines)
-	for k, match_len in pairs(M.highlight_starts) do
-		if match_len ~= false then
-			utils.highlight_text(k - 1, M.offsets[k], M.offsets[k] + match_len)
-		end
+local function finish_round(session)
+	session.end_time = (hrtime() - session.started_at) / 1000000000
+	session.round_done = true
+	set_summary(session)
+	state.record(session.end_time)
+end
+
+local function handle_key(session, key)
+	if not session_is_valid(session) then
+		return
 	end
-end
 
--- TODO: generalize this using table and loop
-function M.set_summary(title_text, time_text, stats_text)
-	M.lines = {
-		"",
-		"",
-		utils.center_text(title_text, M.width),
-		"",
-		stats_text ~= nil and utils.center_text(time_text, M.width) or "",
-		"",
-		stats_text ~= nil and utils.center_text(stats_text, M.width) or "",
-		utils.center_text("to reset press `r`", M.width),
-		"",
-		"",
-	}
-	M.draw()
-end
-
-function M.key_pressed(key)
-	if key == "<BS>" then -- BACKSPACE
-		M.memory = string.sub(M.memory, 0, -2)
+	if key == "<BS>" or key == "<C-h>" then
+		session.memory = session.memory:sub(1, -2)
 		key = ""
-	elseif key == "<CR>" then -- RESET
-		if not M.round_done then
+	elseif key == "<CR>" then
+		if not session.round_done then
 			return
 		end
-		api.nvim_buf_set_lines(M.buf, 0, N_WORDS, false, M.lines)
 
-		M.found = 0
-		M.fetch_new_lines()
-		M.round_done = false
-		M.timestamp = os.time()
-		M.draw()
+		reset_round(session)
+		draw(session)
+		vim.cmd.startinsert()
 		return
 	end
 
-	if M.round_done then
+	if session.round_done then
 		if key == "r" then
-			M.reset_redraw_stats()
+			reset_stats(session)
+		elseif key == "q" and session.win ~= nil and api.nvim_win_is_valid(session.win) then
+			api.nvim_win_close(session.win, true)
 		end
 		return
 	end
 
-	M.memory = M.memory .. key
-
-	-- reset highlights
-	for k, _ in pairs(M.highlight_starts) do
-		M.highlight_starts[k] = false
+	session.memory = session.memory .. key
+	for index = 1, #session.highlight_starts do
+		session.highlight_starts[index] = false
 	end
-	utils.reset_highlights()
 
-	local match = false
-	for k, word in pairs(M.words) do
-		if M.ignore_lines[k] == nil then
-			if string.sub(M.memory, -string.len(word)) == word then
-				match = true
-				table.insert(M.ignore_lines, k, true)
-				M.found = M.found + 1
-				M.lines[k] = string.rep(" ", M.width)
+	local found_word = false
+	for index, word in ipairs(session.words) do
+		if not session.matched[index] then
+			if session.memory:sub(-#word) == word then
+				session.matched[index] = true
+				session.found = session.found + 1
+				session.lines[index] = string.rep(" ", session.width)
+				found_word = true
 			else
-				-- NOTE: we iterate to find smaller match
-				for x = string.len(word), 1, -1 do
-					local part = string.sub(word, 0, x)
-					local part_len = string.len(part)
-					if string.sub(M.memory, -part_len) == part then
-						M.highlight_starts[k] = part_len
+				for size = #word, 1, -1 do
+					local part = word:sub(1, size)
+					if session.memory:sub(-#part) == part then
+						session.highlight_starts[index] = #part
 						break
 					end
 				end
 			end
 		end
 	end
-	if match == true then
-		for hk, _ in pairs(M.highlight_starts) do
-			M.highlight_starts[hk] = false
-		end
-		M.memory = ""
-	end
-	M.draw()
 
-	if M.found == M.height then
-		M.end_time = os.time() - M.timestamp
-		M.set_summary(
-			string.format("Done in : %d seconds", M.end_time),
-			"To refresh press <CR> (Enter)",
-			state.repr(M.end_time)
-		)
-		M.round_done = true
-		state.record(M.end_time)
+	if found_word then
+		for index = 1, #session.highlight_starts do
+			session.highlight_starts[index] = false
+		end
+		session.memory = ""
+	end
+
+	draw(session)
+
+	if session.found == #session.words then
+		finish_round(session)
 	end
 end
 
-function M.set_mapping()
-	local keys = {
-		" ",
-		"a",
-		"b",
-		"c",
-		"d",
-		"e",
-		"f",
-		"g",
-		"h",
-		"i",
-		"j",
-		"k",
-		"l",
-		"m",
-		"n",
-		"o",
-		"p",
-		"q",
-		"r",
-		"s",
-		"t",
-		"u",
-		"v",
-		"w",
-		"x",
-		"y",
-		"z",
-		"<BS>",
-		"<CR>",
-	}
-	for _, letter in pairs(keys) do
-		vim.keymap.set("i", letter, function()
-			M.key_pressed(letter)
+local function close_session(session)
+	if active_session == session then
+		active_session = nil
+	end
+	if session ~= nil then
+		session.win = nil
+		session.buf = nil
+	end
+end
+
+local function set_mappings(session)
+	for _, key in ipairs(LETTERS) do
+		vim.keymap.set("i", key, function()
+			handle_key(session, key)
 		end, {
-			buffer = 0,
+			buffer = session.buf,
+			nowait = true,
+			silent = true,
 		})
 	end
+
+	for _, key in ipairs(CONTROL_KEYS) do
+		vim.keymap.set("i", key, function()
+			handle_key(session, key)
+		end, {
+			buffer = session.buf,
+			nowait = true,
+			silent = true,
+		})
+	end
+
+	vim.keymap.set("n", "q", function()
+		if session.win ~= nil and api.nvim_win_is_valid(session.win) then
+			api.nvim_win_close(session.win, true)
+		end
+	end, {
+		buffer = session.buf,
+		nowait = true,
+		silent = true,
+	})
+end
+
+local function open_window(session)
+	local ui = session.ui
+	local row = math.floor((ui.height - session.height) / 2)
+	local col = math.floor((ui.width - session.width) / 2)
+
+	session.buf = api.nvim_create_buf(false, true)
+	api.nvim_set_option_value("buftype", "nofile", { buf = session.buf })
+	api.nvim_set_option_value("bufhidden", "wipe", { buf = session.buf })
+	api.nvim_set_option_value("swapfile", false, { buf = session.buf })
+	api.nvim_set_option_value("filetype", "typebreak", { buf = session.buf })
+
+	session.win = api.nvim_open_win(session.buf, true, {
+		relative = "editor",
+		width = session.width,
+		height = session.height,
+		col = col,
+		row = row,
+		border = "rounded",
+		anchor = "NW",
+		style = "minimal",
+	})
+
+	api.nvim_set_option_value("number", false, { win = session.win })
+	api.nvim_set_option_value("relativenumber", false, { win = session.win })
+	api.nvim_set_option_value("signcolumn", "no", { win = session.win })
+	api.nvim_set_option_value("wrap", false, { win = session.win })
+	api.nvim_set_option_value("cursorline", false, { win = session.win })
+
+	api.nvim_create_autocmd("BufWipeout", {
+		buffer = session.buf,
+		once = true,
+		callback = function()
+			close_session(session)
+		end,
+	})
+
+	set_mappings(session)
+	draw(session)
+	vim.cmd.startinsert()
+end
+
+function M.start(use_local_dictionary)
+	state.load()
+
+	if session_is_valid(active_session) then
+		api.nvim_win_close(active_session.win, true)
+	end
+
+	local ui = api.nvim_list_uis()[1]
+	if ui == nil then
+		error("typebreak.nvim requires an attached UI")
+	end
+
+	local session = {
+		buf = nil,
+		win = nil,
+		use_local_dictionary = use_local_dictionary or false,
+		width = WIDTH,
+		height = N_WORDS,
+		ui = ui,
+	}
+
+	reset_round(session)
+	active_session = session
+	open_window(session)
 end
 
 function M.setup(options)

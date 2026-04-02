@@ -18,22 +18,20 @@ Take a brief break from current work and use it to speed up your typing speed.
 
 # Install
 
-use your favorite plugin manager to install with [plenary](https://github.com/nvim-lua/plenary.nvim) as dependency:
+Use your favorite plugin manager to install it. The refreshed version uses current Neovim APIs and targets Neovim 0.10+.
 
 Plug
 ```viml
 Plug 'nagy135/typebreak.nvim'
-Plug 'nvim-lua/plenary.nvim'
 ```
 
 Packer
 ```lua
-use { 'nagy135/typebreak.nvim', requires = 'nvim-lua/plenary.nvim' }
+use { 'nagy135/typebreak.nvim' }
 
 -- with binding
 
 use { 'nagy135/typebreak.nvim',
-    requires = 'nvim-lua/plenary.nvim',
     config = function()
         vim.keymap.set('n', '<leader>tb', require('typebreak').start, { desc = "Typebreak" })
     end
@@ -61,8 +59,7 @@ vim.keymap.set('n', '<leader>tb', require('typebreak').start, { desc = "Typebrea
 ```
 
 # Custom dictionary
-There is also option to NOT use [herokuapp](https://random-word-api.herokuapp.com/word?number=10) for fetching words.
-By default we use it but if you wanna use local dictionary instead, you need to do following:
+By default it tries to fetch random words from a remote API and falls back to the shipped local dictionary if that fails. If you want to force the local dictionary, you need to do following:
 
 First you simply pass true to start function
 ```lua
