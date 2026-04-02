@@ -1,25 +1,28 @@
-local Path = require('plenary.path')
-local utils = require('typebreak.utils')
+local utils = require("typebreak.utils")
 
 local data_path = vim.fn.stdpath("data")
-local storage_path = string.format("%s/typebreak.json", data_path)
+local storage_path = vim.fs.joinpath(data_path, "typebreak.json")
 
 local M = {
     previous_times = {}
 }
 
-
 local load_json_from_path = function(path)
-    return vim.fn.json_decode(Path:new(path):read())
+    local lines = vim.fn.readfile(path)
+    if #lines == 0 then
+        return {}
+    end
+
+    return vim.json.decode(table.concat(lines, "\n"))
 end
 
 local store_state = function()
-    Path:new(storage_path):write(vim.fn.json_encode(M.previous_times), "w")
+    vim.fn.writefile({ vim.json.encode(M.previous_times) }, storage_path)
 end
 
 M.load = function()
     local ok, result = pcall(load_json_from_path, storage_path)
-    if ok then
+    if ok and type(result) == "table" then
         M.previous_times = result
     end
 end
