@@ -258,7 +258,9 @@ end
 
 local function map_insert_key(session, key)
 	vim.keymap.set("i", key, function()
-		handle_key(session, key)
+		vim.schedule(function()
+			handle_key(session, key)
+		end)
 		return ""
 	end, {
 		buffer = session.buf,
