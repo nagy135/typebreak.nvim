@@ -38,7 +38,7 @@ local LETTERS = {
 	"y",
 	"z",
 }
-local CONTROL_KEYS = { "<BS>", "<C-h>", "<CR>" }
+local CONTROL_KEYS = { "<BS>", "<C-h>", "<C-?>", "<CR>" }
 
 local active_session
 
@@ -256,25 +256,26 @@ local function close_session(session)
 	end
 end
 
+local function map_insert_key(session, key)
+	vim.keymap.set("i", key, function()
+		handle_key(session, key)
+		return ""
+	end, {
+		buffer = session.buf,
+		expr = true,
+		nowait = true,
+		silent = true,
+		replace_keycodes = false,
+	})
+end
+
 local function set_mappings(session)
 	for _, key in ipairs(LETTERS) do
-		vim.keymap.set("i", key, function()
-			handle_key(session, key)
-		end, {
-			buffer = session.buf,
-			nowait = true,
-			silent = true,
-		})
+		map_insert_key(session, key)
 	end
 
 	for _, key in ipairs(CONTROL_KEYS) do
-		vim.keymap.set("i", key, function()
-			handle_key(session, key)
-		end, {
-			buffer = session.buf,
-			nowait = true,
-			silent = true,
-		})
+		map_insert_key(session, key)
 	end
 
 	vim.keymap.set("n", "q", function()
