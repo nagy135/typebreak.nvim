@@ -7,6 +7,26 @@ local M = {
     previous_times = {}
 }
 
+M.last_time = function()
+    return M.previous_times[#M.previous_times]
+end
+
+M.average_time = function(current_time)
+    local total = utils.table_sum(M.previous_times)
+    local count = #M.previous_times
+
+    if current_time ~= nil then
+        total = total + current_time
+        count = count + 1
+    end
+
+    if count == 0 then
+        return nil
+    end
+
+    return total / count
+end
+
 local load_json_from_path = function(path)
     local lines = vim.fn.readfile(path)
     if #lines == 0 then
@@ -35,20 +55,6 @@ end
 M.reset = function()
     M.previous_times = {}
     store_state()
-end
-
-M.repr = function(time)
-    local last = #M.previous_times > 0
-        and M.previous_times[#M.previous_times]
-        or "N/A"
-    local avg = #M.previous_times > 0
-        and string.format("%.2f", (
-            (time + utils.table_sum(M.previous_times)
-                ) / (
-                #M.previous_times + 1)
-            ))
-        or "N/A"
-    return "Last: " .. last .. ', Avg: ' .. avg
 end
 
 

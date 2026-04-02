@@ -8,6 +8,7 @@ local M = {}
 local N_WORDS = 10
 local WIDTH = 50
 local REMOTE_WORDS_URL = "https://random-word-api.herokuapp.com/word?number=%d"
+local hrtime = (vim.uv or vim.loop).hrtime
 local LETTERS = {
 	" ",
 	"a",
@@ -106,18 +107,20 @@ local function reset_round(session)
 	session.round_done = false
 	session.memory = ""
 	session.words = pick_words(session.use_local_dictionary)
+	session.char_count = 0
 	session.found = 0
 	session.lines = {}
 	session.highlight_starts = {}
 	session.matched = {}
 	session.offsets = {}
-	session.timestamp = os.time()
+	session.started_at = hrtime()
 	session.end_time = nil
 
 	for index, word in ipairs(session.words) do
 		local length = #word
 		local before = math.random(0, math.max(0, session.width - length))
 		local after = session.width - length - before
+		session.char_count = session.char_count + length
 
 		session.lines[index] = string.rep(" ", before) .. word .. string.rep(" ", after)
 		session.highlight_starts[index] = false
@@ -139,15 +142,24 @@ local function draw(session)
 end
 
 local function set_summary(session)
+	local function format_stat(label, seconds)
+		if seconds == nil then
+			return string.format("%s: n/a", label)
+		end
+
+		local elapsed = math.max(seconds, 0.001)
+		local wpm = math.floor(((session.char_count / 5) / (elapsed / 60)) + 0.5)
+		return string.format("%s: %.1f (%dwpm)", label, seconds, wpm)
+	end
+
 	session.lines = {
 		"",
+		utils.center_text("<CR> restart | q quit | r reset stats", session.width),
 		"",
-		utils.center_text(string.format("Done in : %d seconds", session.end_time), session.width),
+		utils.center_text(format_stat("current", session.end_time), session.width),
+		utils.center_text(format_stat("last", state.last_time()), session.width),
+		utils.center_text(format_stat("average", state.average_time(session.end_time)), session.width),
 		"",
-		utils.center_text("To refresh press <CR> (Enter)", session.width),
-		"",
-		utils.center_text(state.repr(session.end_time), session.width),
-		utils.center_text("to reset press `r`", session.width),
 		"",
 		"",
 	}
@@ -160,7 +172,7 @@ local function reset_stats(session)
 end
 
 local function finish_round(session)
-	session.end_time = os.time() - session.timestamp
+	session.end_time = (hrtime() - session.started_at) / 1000000000
 	session.round_done = true
 	set_summary(session)
 	state.record(session.end_time)
@@ -188,6 +200,8 @@ local function handle_key(session, key)
 	if session.round_done then
 		if key == "r" then
 			reset_stats(session)
+		elseif key == "q" and session.win ~= nil and api.nvim_win_is_valid(session.win) then
+			api.nvim_win_close(session.win, true)
 		end
 		return
 	end
